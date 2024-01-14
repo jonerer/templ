@@ -16,19 +16,10 @@ func (_ switchExpressionParser) Parse(pi *parse.Input) (n Node, ok bool, err err
 		return
 	}
 
-	// Once we've got a prefix, read until {\n.
+	// Once we have a prefix, we must have a Go expression.
 	var r SwitchExpression
-	until := parse.All(openBraceWithOptionalPadding, parse.NewLine)
-	endOfStatementExpression := ExpressionOf(parse.StringUntil(until))
-	if r.Expression, ok, err = endOfStatementExpression.Parse(pi); err != nil || !ok {
-		err = parse.Error("switch: "+unterminatedMissingCurly, pi.Position())
-		return
-	}
-
-	// Eat " {\n".
-	if _, ok, err = until.Parse(pi); err != nil || !ok {
-		err = parse.Error("switch: "+unterminatedMissingCurly, pi.Position())
-		return
+	if r.Expression, err = parseGoExpression("switch", pi); err != nil {
+		return r, false, err
 	}
 
 	// Once we've had the start of a switch block, we must conclude the block.
@@ -55,29 +46,28 @@ func (_ switchExpressionParser) Parse(pi *parse.Input) (n Node, ok bool, err err
 	return r, true, nil
 }
 
-var caseExpressionStartParser = parse.Func(func(in *parse.Input) (e Expression, ok bool, err error) {
-	start := in.Index()
+var caseExpressionStartParser = parse.Func(func(pi *parse.Input) (e Expression, ok bool, err error) {
+	start := pi.Index()
 
 	// Optional whitespace.
-	if _, _, err = parse.OptionalWhitespace.Parse(in); err != nil {
+	if _, _, err = parse.OptionalWhitespace.Parse(pi); err != nil {
 		return
 	}
 
-	// Read the line.
-	if e, ok, err = ExpressionOf(parse.StringUntil(parse.String("\n"))).Parse(in); err != nil || !ok {
-		in.Seek(start)
-		return
-	}
-
-	// Check the expected results.
-	ok = (strings.HasPrefix(e.Value, "case ") || strings.HasPrefix(e.Value, "default"))
+	// Look for a case or default statement.
+	s, _ := pi.Peek(9)
+	ok = (strings.HasPrefix(s, "case") || strings.HasPrefix(s, "default"))
 	if !ok {
-		in.Seek(start)
+		pi.Seek(start)
 		return
+	}
+
+	if e, err = parseGoExpression("case expression", pi); err != nil {
+		return e, false, err
 	}
 
 	// Eat terminating newline.
-	_, _, _ = parse.String("\n").Parse(in)
+	_, _, _ = parse.String("\n").Parse(pi)
 
 	return
 })

@@ -17,17 +17,9 @@ func (_ conditionalAttributeParser) Parse(pi *parse.Input) (r ConditionalAttribu
 		return
 	}
 
-	// Once we've got a prefix, read until {\n.
-	until := parse.All(openBraceWithOptionalPadding, parse.NewLine)
-	if r.Expression, ok, err = ExpressionOf(parse.StringUntil(until)).Parse(pi); err != nil || !ok {
-		err = parse.Error("attribute if: unterminated (missing closing '{\n')", pi.Position())
-		return
-	}
-
-	// Eat " {\n".
-	if _, ok, err = until.Parse(pi); err != nil || !ok {
-		err = parse.Error("attribute if: unterminated (missing closing '{\n')", pi.Position())
-		return
+	// Once we have the `if` prefix, we must have a Go expression to parse.
+	if r.Expression, err = parseGoExpression("attribute if", pi); err != nil {
+		return r, false, err
 	}
 
 	// Read the 'Then' attributes.

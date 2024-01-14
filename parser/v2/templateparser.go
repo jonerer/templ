@@ -24,24 +24,13 @@ var templateExpressionParser = parse.Func(func(pi *parse.Input) (r templateExpre
 		return
 	}
 
-	// Once we have the prefix, everything to the brace at the end of the line is Go.
+	// Once we have the prefix we must have a Go function declaration.
 	// e.g.
 	// templ (x []string) Test() {
 	// becomes:
 	// func (x []string) Test() templ.Component {
-
-	// Once we've got a prefix, read until {\n.
-	until := parse.All(openBraceWithOptionalPadding, parse.NewLine)
-	msg := "templ: malformed templ expression, expected `templ functionName() {`"
-	if r.Expression, ok, err = ExpressionOf(parse.StringUntil(until)).Parse(pi); err != nil || !ok {
-		err = parse.Error(msg, pi.Position())
-		return
-	}
-
-	// Eat " {\n".
-	if _, ok, err = until.Parse(pi); err != nil || !ok {
-		err = parse.Error(msg, pi.Position())
-		return
+	if r.Expression, err = parseGoFuncDecl(pi); err != nil {
+		return r, false, err
 	}
 
 	return r, true, nil

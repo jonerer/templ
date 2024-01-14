@@ -1,28 +1,8 @@
 package parser
 
 import (
-	"unicode"
-
 	"github.com/a-h/parse"
 )
-
-var templElementStartExpressionParams = parse.StringFrom(
-	parse.String("("),
-	parse.StringFrom[Expression](functionArgsParser{
-		startBracketCount: 1,
-	}),
-	parse.String(")"),
-)
-
-var templElementStartExpression = ExpressionOf(parse.StringFrom(
-	parse.AtLeast(1, parse.StringFrom(
-		parse.StringFrom(parse.Optional(parse.String("."))),
-		parse.StringFrom(parse.Optional(parse.String("_"))),
-		parse.RuneInRanges(unicode.Letter),
-		parse.StringFrom(parse.AtMost(255, parse.RuneInRanges(unicode.Letter, unicode.Number))),
-		parse.StringFrom(parse.Optional(templElementStartExpressionParams)),
-	)),
-))
 
 type templElementExpressionParser struct{}
 
@@ -34,9 +14,8 @@ func (p templElementExpressionParser) Parse(pi *parse.Input) (n Node, ok bool, e
 
 	// Parse the identifier.
 	var r TemplElementExpression
-	if r.Expression, ok, err = templElementStartExpression.Parse(pi); err != nil || !ok {
-		err = parse.Error("templ element: found start '@' but expression was not closed", pi.Position())
-		return
+	if r.Expression, err = parseGoExpression("templ element", pi); err != nil {
+		return r, false, err
 	}
 
 	// Once we've got a start expression, check to see if there's an open brace for children. {\n.

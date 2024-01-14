@@ -215,9 +215,8 @@ var boolExpressionAttributeParser = parse.Func(func(pi *parse.Input) (r BoolExpr
 	}
 
 	// Once we have a prefix, we must have an expression that returns a template.
-	if r.Expression, ok, err = exp.Parse(pi); err != nil || !ok {
-		err = parse.Error("boolean expression: expected Go expression not found", pi.Position())
-		return
+	if r.Expression, err = parseGoExpression("boolean expression", pi); err != nil {
+		return r, false, err
 	}
 
 	// Eat the Final brace.
@@ -251,9 +250,8 @@ var expressionAttributeParser = parse.Func(func(pi *parse.Input) (attr Expressio
 	}
 
 	// Expression.
-	if attr.Expression, ok, err = exp.Parse(pi); err != nil || !ok {
-		pi.Seek(start)
-		return
+	if attr.Expression, err = parseGoExpression("attribute if", pi); err != nil {
+		return attr, false, err
 	}
 
 	// Eat the final brace.
@@ -281,9 +279,8 @@ var spreadAttributesParser = parse.Func(func(pi *parse.Input) (attr SpreadAttrib
 	}
 
 	// Expression.
-	if attr.Expression, ok, err = exp.Parse(pi); err != nil || !ok {
-		pi.Seek(start)
-		return
+	if attr.Expression, err = parseGoExpression("attribute spread", pi); err != nil {
+		return attr, false, err
 	}
 
 	// Check if end of expression has "..." for spread.

@@ -216,7 +216,7 @@ func TestExpressions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ep := &expressionParser{
+			ep := &jsExpressionParser{
 				startBraceCount: tt.startBraceCount,
 			}
 			expr := tt.input[len(tt.prefix):]

@@ -16,19 +16,9 @@ func (ifExpressionParser) Parse(pi *parse.Input) (n Node, ok bool, err error) {
 		return
 	}
 
-	// Once we've got a prefix, read until {\n.
-	// If there's no match, there's no {\n, which is an error.
 	var r IfExpression
-	until := parse.All(openBraceWithOptionalPadding, parse.NewLine)
-	if r.Expression, ok, err = ExpressionOf(parse.StringUntil(until)).Parse(pi); err != nil || !ok {
-		err = parse.Error("if: "+unterminatedMissingCurly, pi.Position())
-		return
-	}
-
-	// Eat " {\n".
-	if _, ok, err = until.Parse(pi); err != nil || !ok {
-		err = parse.Error("if: "+unterminatedMissingCurly, pi.Position())
-		return
+	if r.Expression, err = parseGoExpression("if", pi); err != nil {
+		return r, false, err
 	}
 
 	// Once we've had the start of an if block, we must conclude the block.
@@ -81,18 +71,9 @@ func (elseIfExpressionParser) Parse(pi *parse.Input) (r ElseIfExpression, ok boo
 		return
 	}
 
-	// Once we've got a prefix, read until {\n.
-	// If there's no match, there's no {\n, which is an error.
-	until := parse.All(openBraceWithOptionalPadding, parse.NewLine)
-	if r.Expression, ok, err = ExpressionOf(parse.StringUntil(until)).Parse(pi); err != nil || !ok {
-		err = parse.Error("if: unterminated else if (missing closing '{\n')", pi.Position())
-		return
-	}
-
-	// Eat " {\n".
-	if _, ok, err = until.Parse(pi); err != nil || !ok {
-		err = parse.Error("if: unterminated (missing closing '{')", pi.Position())
-		return
+	// Once we have the `else if` prefix, we must have a Go expression to parse.
+	if r.Expression, err = parseGoExpression("else if", pi); err != nil {
+		return r, false, err
 	}
 
 	// Once we've had the start of an if block, we must conclude the block.

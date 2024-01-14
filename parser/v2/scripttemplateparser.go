@@ -18,7 +18,7 @@ var scriptTemplateParser = parse.Func(func(pi *parse.Input) (r ScriptTemplate, o
 
 	// Read code expression.
 	var e Expression
-	if e, ok, err = exp.Parse(pi); err != nil || !ok {
+	if e, ok, err = jsExp.Parse(pi); err != nil || !ok {
 		pi.Seek(start)
 		return
 	}
