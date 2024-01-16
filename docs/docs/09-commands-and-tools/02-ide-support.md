@@ -35,6 +35,18 @@ Include the following to the settings.json in order to enable autocompletion for
 }
 ```
 
+### Emmet HTML completion
+
+Include the following to the settings.json in order to get smooth HTML completion via emmet (such as expanding `input:button<Tab>` to `<input type="button" value="">`
+
+```json
+{
+  "emmet.includeLanguages": {
+    "templ": "html"
+  }
+}
+```
+
 ## Neovim &gt; 0.5.0
 
 A plugin written in VimScript which adds syntax highlighting: [joerdav/templ.vim](https://github.com/Joe-Davidson1802/templ.vim).
